@@ -1,0 +1,37 @@
+﻿#pragma kernel GenerateNoise
+
+RWTexture2D<float3> result;
+RWStructuredBuffer<float3> points;
+int pointsCount;
+float3 minBound;
+float precision;
+
+float closestPointDistance(float3 pos, out int index){
+    
+    float dist;
+    float minDist = 100000;
+    for(int i = 0;i < pointsCount;i++){
+        float3 worldPos = minBound + (points[i] * precision);
+        float3 tmp = (points[i] - pos);
+        dist = sqrt((tmp.x * tmp.x) + (tmp.y * tmp.y));
+        if(dist < minDist){
+            minDist = dist;
+            index = i;
+        }
+    }
+
+    return minDist;
+}
+
+[numthreads(16,16,1)]
+void GenerateNoise(uint3 id : SV_DispatchThreadID)
+{
+    int idx = 0;
+    int clampDist = 200;
+    float dist = closestPointDistance(id.xyz,idx);
+    dist = dist / clampDist;
+   // result[id.xy] = float4(1,0,0,1);
+    result[id.xy] = float4(dist ,dist,dist,1);
+  //  result[id.xy] = float4(sin(idx) ,cos(idx),cos(idx),1);
+}
+
